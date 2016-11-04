@@ -64,6 +64,7 @@ class RobotTest < Test::Unit::TestCase
   end
 
   def assert_output output
+    require 'stringio'
     stdout = $stdout.dup
     $stdout = StringIO.new
     yield
