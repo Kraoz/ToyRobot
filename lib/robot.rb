@@ -85,17 +85,12 @@ protected
     !self.position.nil? && !self.orientation.nil?
   end
 
-  def position_inside_table? position
-    position.x >= 0 && position.x < self.table.width &&
-      position.y >= 0 && position.y < self.table.height
-  end
-
   def valid_orientation? orientation
     self.class.orientations.include? orientation
   end
 
   def position= position
-    @position = position if self.position_inside_table? position
+    @position = position if self.table.position_within? position
   end
 
   def orientation= orientation
