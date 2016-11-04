@@ -8,7 +8,49 @@ class Robot
 
   Position = Struct.new(:x, :y)
 
-  attr_accessor :table, :position, :orientation
+  attr_accessor :table
+  attr_reader :position, :orientation
+
+  def initialize table
+    self.table = table
+  end
+
+  def execute! command_name, *command_arguments
+    self.available_command! command_name
+    self.send command_name, *command_arguments
+  end
+
+protected
+  def place x, y, orientation
+    self.position = Position[x.to_i, y.to_i]
+    self.orientation = orientation
+  end
+
+  def move
+    return unless self.placed?
+    self.position = case self.orientation
+      when :NORTH then Position[self.position.x, self.position.y + 1]
+      when :EAST then Position[self.position.x + 1, self.position.y]
+      when :SOUTH then Position[self.position.x, self.position.y - 1]
+      when :WEST then Position[self.position.x - 1, self.position.y]
+    end
+  end
+
+  def left
+    return unless self.placed?
+    self.orientation = self.class.orientations[self.orientation_index - 1]
+  end
+
+  def right
+    return unless self.placed?
+    self.orientation = self.class.orientations[self.orientation_index + 1] ||
+      self.class.orientations.first
+  end
+
+  def report
+    return unless self.placed?
+    puts "#{self.position.x},#{self.position.y},#{self.orientation}"
+  end
 
   def self.available_commands
     @@available_commands ||= [
@@ -17,6 +59,15 @@ class Robot
       'left',
       'right',
       'report',
+    ]
+  end
+
+  def self.orientations
+    @@orientations ||= [
+      'NORTH',
+      'EAST',
+      'SOUTH',
+      'WEST',
     ]
   end
 
@@ -30,29 +81,28 @@ class Robot
     end
   end
 
-  def initialize table
-    self.table = table
+  def placed?
+    !self.position.nil? && !self.orientation.nil?
   end
 
-  def execute! command_name, command_arguments
-    p "EXECUTING [#{command_name}] with [#{command_arguments}]"
-    self.available_command! command_name
-    self.send command_name, *command_arguments
+  def position_inside_table? position
+    position.x >= 0 && position.x < self.table.width &&
+      position.y >= 0 && position.y < self.table.height
   end
 
-  def place x, y, f
-    p "PLACE X: #{x}, Y: #{y}, F: #{f}"
+  def valid_orientation? orientation
+    self.class.orientations.include? orientation
   end
 
-  def move
+  def position= position
+    @position = position if self.position_inside_table? position
   end
 
-  def left
+  def orientation= orientation
+    @orientation = orientation.to_sym if self.valid_orientation? orientation
   end
 
-  def right
-  end
-
-  def report
+  def orientation_index
+    self.class.orientations.index self.orientation.to_s
   end
 end
